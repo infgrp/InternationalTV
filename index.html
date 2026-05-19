@@ -14,7 +14,6 @@
             min-height: 100vh; color: #1e293b; padding: 15px;
         }
 
-        /* 📺 스마트 TV 본체 */
         .tv-device {
             width: 100%; max-width: 550px;
             background: #ffffff;
@@ -43,7 +42,6 @@
             box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
         }
 
-        /* 📺 비디오 모니터 영역 */
         .monitor-panel {
             background: #000;
             border-radius: 12px;
@@ -125,7 +123,7 @@
     <div class="monitor-panel">
         <div id="no-signal" class="no-signal">
             <h2>대기 중</h2>
-            <p>아래에서 지역을 선택하고 채널을 클릭하세요.<br>(방송국 사정에 따라 간혹 끊길 수 있습니다)</p>
+            <p>아래에서 지역을 선택하고 채널을 클릭하세요.<br>(방송국 보안 정책에 따라 간혹 차단될 수 있습니다)</p>
         </div>
         <video id="tv-player" controls autoplay playsinline></video>
     </div>
@@ -137,12 +135,12 @@
     <div class="controls">
         <select id="region-select">
             <option value="">-- 지역 선택 (Region) --</option>
-            <option value="Asia">🌏 아시아 (Asia) & 오세아니아</option>
+            <option value="Asia">🌏 아시아 (Asia) & 중동</option>
             <option value="Europe">🇪🇺 유럽 (Europe)</option>
-            <option value="Russia">🇷🇺 러시아 (Russia) & CIS</option>
+            <option value="Russia">🇷🇺 러시아 (Russia)</option>
             <option value="NorthAmerica">🇺🇸 북미 (North America)</option>
             <option value="SouthAmerica">🌎 남미 (South America)</option>
-            <option value="Africa">🌍 중동 & 아프리카 (ME & Africa)</option>
+            <option value="Africa">🌍 아프리카 (Africa)</option>
         </select>
         <button id="scan-btn" class="scan-btn">불러오기</button>
     </div>
@@ -155,14 +153,19 @@
 </div>
 
 <script>
-    // 💡 최신 주소(2026년 기준)로 업데이트된 글로벌 라이브 TV 데이터베이스
+    // 💡 최신(2026년 기준) 라이브 주소 및 접속 차단 대비 다중 서버(우회) 구축
     const tvDatabase = {
         "Asia": [
+            // 아리랑TV 최신 엣지(Edge) 서버 
             { name: "Arirang TV (Korea)", category: "News/Culture", url: "https://amdlive-ch01-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/playlist.m3u8" },
+            
+            // 알자지라 우회 접속 경로 3개 (하나가 브라우저 보안에 막히면 다른 서버 사용)
+            { name: "Al Jazeera (Server 1 - Main)", category: "News", url: "https://live-hls-web-aje.getaj.net/AJE/index.m3u8" },
+            { name: "Al Jazeera (Server 2 - CloudFront)", category: "News", url: "https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/al-jazeera-english/playlist.m3u8" },
+            { name: "Al Jazeera (Server 3 - EU Proxy)", category: "News", url: "https://dash4.antik.sk/live/test_aljazeera_eng/playlist.m3u8" },
+            
             { name: "CGTN (China)", category: "News", url: "https://live.cgtn.com/1000/prog_index.m3u8" },
-            { name: "CNA (Singapore)", category: "News", url: "https://d2e1asnsl7br7b.cloudfront.net/7782e205e72f43aeb4a48ec97f66ebbe/index.m3u8" },
-            { name: "Al Jazeera (Qatar)", category: "News", url: "https://live-hls-web-aje.getaj.net/AJE/index.m3u8" },
-            { name: "Sky News Australia", category: "News", url: "https://skynewsau-live.akamaized.net/hls/live/2002689/skynewsau-extra1/master.m3u8" }
+            { name: "CNA (Singapore)", category: "News", url: "https://d2e1asnsl7br7b.cloudfront.net/7782e205e72f43aeb4a48ec97f66ebbe/index.m3u8" }
         ],
         "Europe": [
             { name: "DW English (Germany)", category: "News", url: "https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8" },
@@ -176,10 +179,11 @@
             { name: "Channel One Russia (1TV)", category: "General", url: "https://edge25-htc.1tv.ru/live-v2/1000/1tv/master.m3u8" }
         ],
         "NorthAmerica": [
-            { name: "Bloomberg TV (EU Stream)", category: "Business", url: "https://liveprodeuwest.akamaized.net/eu1/Channel-EUTVqvs-AWS-ireland-1/Source-EUTVqvs-1000-1_live.m3u8" },
+            // 블룸버그 2채널 구축 (미국 본토 서버 / 아시아 서버)
+            { name: "Bloomberg TV (US Server)", category: "Business", url: "https://liveproduseast.akamaized.net/us/Channel-USTV-AWS-virginia-1/Source-USTV-1000-1_live.m3u8" },
+            { name: "Bloomberg TV (Asia Server)", category: "Business", url: "https://liveprodapnortheast.akamaized.net/asia1/Channel-AsiaTVqvs-AWS-tokyo-1/Source-AsiaTVqvs-1000-1_live.m3u8" },
             { name: "CBS News Live", category: "News", url: "https://cbsn-us.cbsnstream.cbsnews.com/out/v1/55a8648e8f134e82a470f83d562deeca/master.m3u8" },
-            { name: "NASA TV Public", category: "Science", url: "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8" },
-            { name: "Red Bull TV", category: "Sports", url: "https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8" }
+            { name: "NASA TV Public", category: "Science", url: "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8" }
         ],
         "SouthAmerica": [
             { name: "TeleSUR (Latin America)", category: "News", url: "https://cdnamd-hls-globecast.akamaized.net/live/ramdisk/telesur/hls_sn_m/index.m3u8" },
@@ -202,14 +206,9 @@
     
     let hls = null; 
 
-    // 💡 지역 선택 시 채널 목록 스캔
     scanBtn.addEventListener('click', () => {
         const region = document.getElementById('region-select').value;
-        
-        if(!region) {
-            alert("지역을 먼저 선택해 주십시오.");
-            return;
-        }
+        if(!region) { alert("지역을 먼저 선택해 주십시오."); return; }
 
         const channels = tvDatabase[region];
         ledStation.innerText = `총 ${channels.length}개의 채널이 검색되었습니다.`;
@@ -227,7 +226,6 @@
         });
     });
 
-    // 💡 TV 채널 재생 로직 (hls.js 활용)
     function playChannel(url, name) {
         ledStation.innerText = `▶ 시청 중: ${name}`;
         noSignalScreen.style.display = 'none'; 
@@ -245,7 +243,7 @@
                 videoElement.play();
             });
             hls.on(Hls.Events.ERROR, function(event, data) {
-                if (data.fatal) handleError();
+                if (data.fatal) handleError(name);
             });
         }
         else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
@@ -253,15 +251,14 @@
             videoElement.addEventListener('loadedmetadata', function() {
                 videoElement.play();
             });
-            videoElement.addEventListener('error', handleError);
+            videoElement.addEventListener('error', () => handleError(name));
         }
     }
 
-    // 재생 오류 발생 시 처리
-    function handleError() {
+    function handleError(name) {
         noSignalScreen.style.display = 'flex';
-        noSignalScreen.innerHTML = '<h2>송출 오류 📡</h2><p>해당 방송국의 서버가 응답하지 않거나 주소가 변경되었습니다.<br>다른 채널을 선택해 주세요.</p>';
-        ledStation.innerText = "연결 실패 (Connection Lost)";
+        noSignalScreen.innerHTML = `<h2>송출 오류 📡</h2><p>해당 서버가 브라우저 보안 정책(CORS)으로 인해 차단되었습니다.<br>동일 방송국의 다른 서버(Server 2, 3)를 클릭해 보세요.</p>`;
+        ledStation.innerText = "연결 실패 (Blocked)";
         onAirIndicator.classList.remove('active');
     }
 </script>
