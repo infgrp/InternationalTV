@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Global Studio TV Receiver</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: radial-gradient(circle at center, #2c2f33 0%, #0a0a0c 100%); 
+            display: flex; justify-content: center; align-items: center; 
+            min-height: 100vh; color: #b9bbbe; padding: 15px;
+        }
+
+        /* 🎛️ 스튜디오 랙 마운트 본체 */
+        .tv-device {
+            width: 100%; max-width: 500px;
+            background: linear-gradient(to bottom, #2a2c31, #18191c);
+            border-radius: 8px; 
+            box-shadow: 0 15px 50px rgba(0,0,0,0.9), 
+                        inset 0 1px 1px rgba(255,255,255,0.1), 
+                        inset 0 -2px 5px rgba(0,0,0,0.5);
+            padding: 25px 20px; 
+            border: 1px solid #111;
+        }
+
+        .brand-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; padding: 0 5px;
+        }
+        .brand-name {
+            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px;
+            color: #72767d; font-weight: bold; text-shadow: 0 -1px 0 #000;
+        }
+        
+        .on-air-light {
+            font-size: 0.7rem; font-weight: bold; letter-spacing: 1px;
+            color: #4a1919; border: 1px solid #4a1919; padding: 3px 8px; border-radius: 3px;
+            transition: 0.3s;
+        }
+        .on-air-light.active {
+            color: #ff3b30; border-color: #ff3b30;
+            text-shadow: 0 0 8px rgba(255, 59, 48, 0.8);
+            box-shadow: inset 0 0 8px rgba(255, 59, 48, 0.3), 0 0 10px rgba(255, 59, 48, 0.2);
+        }
+
+        /* 📺 메인 모니터 (비디오 플레이어 영역) */
+        .monitor-panel {
+            background: #000;
+            border: 3px solid #090a0c; border-radius: 6px;
+            margin-bottom: 20px; 
+            box-shadow: inset 0 0 20px rgba(0,0,0,1), 0 1px 0 rgba(255,255,255,0.05);
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 16 / 9; /* 16:9 TV 비율 고정 */
+        }
+
+        video {
+            width: 100%; height: 100%;
+            background: #000;
+            object-fit: contain;
+        }
+
+        /* 신호 없음 노이즈 화면 (CSS 효과) */
+        .no-signal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: repeating-linear-gradient(0deg, #111 0px, #222 2px, #111 4px);
+            color: #00e5ff; font-family: 'Courier New', Courier, monospace;
+            text-shadow: 0 0 5px #00e5ff; font-weight: bold; z-index: 10;
+        }
+
+        /* 📟 VFD 텍스트 상태창 */
+        .status-bar {
+            background: #090a0c; border: 1px solid #18191c; border-radius: 4px;
+            padding: 10px 15px; margin-bottom: 20px; text-align: center;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00e5ff; text-shadow: 0 0 6px rgba(0, 229, 255, 0.4);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+        #led-station { font-size: 1rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+
+        /* 기계식 컨트롤러 */
+        .controls { display: grid; grid-template-columns: 1fr 100px; gap: 10px; margin-bottom: 20px; }
+        
+        select {
+            appearance: none; background: #202225; color: #dcddde;
+            border: 1px solid #111; padding: 12px; border-radius: 4px;
+            font-size: 0.9rem; cursor: pointer; outline: none; font-weight: bold;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        select:focus { border-color: #00e5ff; }
+
+        .scan-btn {
+            background: linear-gradient(to bottom, #4f545c, #36393f);
+            color: #fff; border: 1px solid #111; border-radius: 4px; 
+            font-size: 0.85rem; font-weight: bold; cursor: pointer;
+            box-shadow: 0 3px 0 #18191c, 0 4px 6px rgba(0,0,0,0.3);
+            text-shadow: 0 -1px 0 #000;
+        }
+        .scan-btn:active { transform: translateY(3px); box-shadow: 0 0 0 #18191c; }
+
+        /* 채널 리스트 창 */
+        .list-window {
+            background: #18191c; border-radius: 4px; height: 200px;
+            overflow-y: auto; border: 1px solid #111;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
+        }
+        .station-item {
+            padding: 15px; border-bottom: 1px solid #202225; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+            border-left: 3px solid transparent; transition: 0.1s;
+        }
+        .station-item:hover { background-color: #292b2f; border-left-color: #00e5ff; }
+        .st-name { color: #fff; font-size: 0.95rem; font-weight: bold; }
+        .st-meta { color: #72767d; font-size: 0.75rem; background: #202225; padding: 3px 6px; border-radius: 3px;}
+
+        .list-window::-webkit-scrollbar { width: 8px; }
+        .list-window::-webkit-scrollbar-track { background: #18191c; }
+        .list-window::-webkit-scrollbar-thumb { background: #2f3136; border-radius: 4px; }
+
+        .no-data { padding: 40px 20px; text-align: center; color: #8e9297; font-size: 0.85rem; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+<div class="tv-device">
+    <div class="brand-header">
+        <div class="brand-name">GLOBAL TV TUNER PRO</div>
+        <div id="on-air-indicator" class="on-air-light">LIVE</div>
+    </div>
+
+    <div class="monitor-panel">
+        <div id="no-signal" class="no-signal">
+            <div style="font-size:1.5rem; margin-bottom:5px;">NO SIGNAL</div>
+            <div style="font-size:0.8rem; color:#888;">SELECT CHANNEL</div>
+        </div>
+        <video id="tv-player" controls autoplay muted playsinline></video>
+    </div>
+
+    <div class="status-bar">
+        <div id="led-station">SYSTEM STANDBY</div>
+    </div>
+
+    <div class="controls">
+        <select id="region-select">
+            <option value="">-- SELECT REGION --</option>
+            <option value="Asia">🌏 Asia & Pacific (아시아/태평양)</option>
+            <option value="Europe">🇪🇺 Europe (유럽)</option>
+            <option value="Russia">🇷🇺 Russia (러시아)</option>
+            <option value="NorthAmerica">🇺🇸 North America (북미)</option>
+            <option value="SouthAmerica">🌎 South America (남미)</option>
+            <option value="Africa">🌍 Africa (아프리카)</option>
+        </select>
+        <button id="scan-btn" class="scan-btn">SCAN</button>
+    </div>
+
+    <div class="list-window">
+        <ul id="station-list">
+            <li class="no-data">지역을 선택하고 SCAN 버튼을 누르세요.</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    // 💡 1. 큐레이션된 글로벌 라이브 TV 데이터베이스 (접속이 매우 안정적인 메이저 채널 위주)
+    const tvDatabase = {
+        "Asia": [
+            { name: "Arirang TV", category: "News/Culture", url: "https://amdlive.ctnd.com.edgesuite.net/arirang_1ch/smil:arirang_1ch.smil/playlist.m3u8" },
+            { name: "CNA (Channel NewsAsia)", category: "News", url: "https://cna_prd_a2h.akamaized.net/hls/live/2013917/cna/master_main.m3u8" },
+            { name: "NHK World Japan", category: "News/Culture", url: "https://b-nhkwlive-ojp.akamaized.net/hls/live/2003459/nhkwlive-ojp-en/index.m3u8" },
+            { name: "Al Jazeera English", category: "News", url: "https://live-hls-web-aje.getaj.net/AJE/index.m3u8" }
+        ],
+        "Europe": [
+            { name: "DW English (Germany)", category: "News", url: "https://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/index.m3u8" },
+            { name: "France 24 (English)", category: "News", url: "https://static.france24.com/live/F24_EN_HI_HLS/live_web.m3u8" },
+            { name: "Sky News (UK)", category: "News", url: "https://skynews-eu.rakuten.wurl.tv/playlist.m3u8" },
+            { name: "EuroNews", category: "News", url: "https://ewns-hls-en-europe.akamaized.net/default/master.m3u8" }
+        ],
+        "Russia": [
+            { name: "RT News (Russia Today)", category: "News", url: "https://rt-glb.rttv.com/dvr/rtnews/playlist.m3u8" },
+            { name: "RT Documentary", category: "Docu", url: "https://rt-rtd.secure.footprint.net/hls-live/rt-rtd/_definst_/live/playlist.m3u8" },
+            { name: "1TV (Channel One Russia)", category: "General", url: "https://edge25-htc.1tv.ru/live-v2/1000/1tv/master.m3u8" }
+        ],
+        "NorthAmerica": [
+            { name: "Bloomberg TV", category: "Business", url: "https://live.bloomberg.tv/cbn/x/8.m3u8" },
+            { name: "ABC News Live", category: "News", url: "https://content.uplynk.com/channel/3324f2467c414329b3b0cc5cd987b6be.m3u8" },
+            { name: "CBS News", category: "News", url: "https://cbsn-us.cbsnstream.cbsnews.com/out/v1/55a8648e8f134e82a470f83d562deeca/master.m3u8" },
+            { name: "NASA TV", category: "Science", url: "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8" }
+        ],
+        "SouthAmerica": [
+            { name: "TeleSUR (Latin America)", category: "News", url: "https://cdnamd-hls-globecast.akamaized.net/live/ramdisk/telesur/hls_sn_m/index.m3u8" },
+            { name: "Record News (Brazil)", category: "News", url: "https://cdn.recordnews.tv.br/videostream/hls/playlist.m3u8" },
+            { name: "TN (Todo Noticias - Argentina)", category: "News", url: "https://live-edge.grupotv.net/tn/master.m3u8" }
+        ],
+        "Africa": [
+            { name: "Africanews", category: "News", url: "https://africanews.wurl.tv/playlist.m3u8" },
+            { name: "Channels TV (Nigeria)", category: "News", url: "https://b2661858.smushcdn.com/2661858/wp-content/uploads/2021/04/Channels-TV.m3u8" },
+            { name: "SABC News (South Africa)", category: "News", url: "https://sabcnews.akamaized.net/hls/live/2018590/sabcnews/master.m3u8" }
+        ]
+    };
+
+    const videoElement = document.getElementById('tv-player');
+    const noSignalScreen = document.getElementById('no-signal');
+    const ledStation = document.getElementById('led-station');
+    const stationList = document.getElementById('station-list');
+    const scanBtn = document.getElementById('scan-btn');
+    const onAirIndicator = document.getElementById('on-air-indicator');
+    
+    let hls = null; // hls.js 인스턴스를 저장할 변수
+
+    // 💡 지역 선택 시 채널 목록 스캔
+    scanBtn.addEventListener('click', () => {
+        const region = document.getElementById('region-select').value;
+        
+        if(!region) {
+            alert("지역을 먼저 선택해 주십시오.");
+            return;
+        }
+
+        const channels = tvDatabase[region];
+        ledStation.innerText = `FOUND ${channels.length} CHANNELS`;
+        stationList.innerHTML = '';
+
+        channels.forEach(channel => {
+            const li = document.createElement('li');
+            li.className = 'station-item';
+            li.innerHTML = `
+                <div class="st-name">${channel.name}</div>
+                <div class="st-meta">${channel.category}</div>
+            `;
+            li.onclick = () => playChannel(channel.url, channel.name);
+            stationList.appendChild(li);
+        });
+    });
+
+    // 💡 TV 채널 재생 로직 (hls.js 활용)
+    function playChannel(url, name) {
+        ledStation.innerText = `TUNED: ${name.toUpperCase()}`;
+        noSignalScreen.style.display = 'none'; // 노이즈 화면 숨김
+        onAirIndicator.classList.add('active'); // LIVE 불 켜짐
+        
+        // 기존에 재생 중인 HLS 스트림이 있다면 파괴(초기화)
+        if (hls) {
+            hls.destroy();
+        }
+
+        // HLS.js가 지원되는 브라우저 (크롬, 엣지, 안드로이드 등)
+        if (Hls.isSupported()) {
+            hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMedia(videoElement);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                videoElement.play();
+            });
+            hls.on(Hls.Events.ERROR, function(event, data) {
+                if (data.fatal) handleError();
+            });
+        }
+        // 기본적으로 HLS를 지원하는 브라우저 (주로 아이폰/맥 Safari)
+        else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+            videoElement.src = url;
+            videoElement.addEventListener('loadedmetadata', function() {
+                videoElement.play();
+            });
+            videoElement.addEventListener('error', handleError);
+        }
+    }
+
+    // 재생 오류 발생 시 처리
+    function handleError() {
+        noSignalScreen.style.display = 'flex';
+        noSignalScreen.innerHTML = '<div style="font-size:1.5rem;">CONNECTION LOST</div><div style="font-size:0.8rem; color:red;">채널 송출이 중단되었습니다.</div>';
+        ledStation.innerText = "SYS.ERROR";
+        onAirIndicator.classList.remove('active');
+    }
+</script>
+
+</body>
+</html>
