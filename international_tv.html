@@ -9,12 +9,11 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #f1f5f9; /* 밝은 배경 */
+            background: #f1f5f9; 
             display: flex; justify-content: center; align-items: center; 
             min-height: 100vh; color: #1e293b; padding: 15px;
         }
 
-        /* 📺 밝고 깔끔한 스마트 TV 본체 */
         .tv-device {
             width: 100%; max-width: 550px;
             background: #ffffff;
@@ -43,14 +42,13 @@
             box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
         }
 
-        /* 📺 비디오 모니터 영역 */
         .monitor-panel {
             background: #000;
             border-radius: 12px;
             margin-bottom: 20px; 
             overflow: hidden;
             position: relative;
-            aspect-ratio: 16 / 9; /* 16:9 비율 유지 */
+            aspect-ratio: 16 / 9; 
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
 
@@ -60,7 +58,6 @@
             object-fit: contain;
         }
 
-        /* 신호 없음 화면 */
         .no-signal {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -70,14 +67,12 @@
         .no-signal h2 { font-size: 1.3rem; margin-bottom: 5px; color: #f8fafc; }
         .no-signal p { font-size: 0.85rem; color: #94a3b8; line-height: 1.4; padding: 0 20px; }
 
-        /* 현재 채널 상태창 */
         .status-bar {
             background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
             padding: 15px; margin-bottom: 20px; text-align: center;
         }
         #led-station { font-size: 1.1rem; font-weight: 700; color: #3b82f6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
 
-        /* 조작 버튼 영역 */
         .controls { display: grid; grid-template-columns: 1fr 100px; gap: 10px; margin-bottom: 20px; }
         
         select {
@@ -97,7 +92,6 @@
         }
         .scan-btn:active { transform: scale(0.96); }
 
-        /* 채널 리스트 창 */
         .list-window {
             background: #fff; border-radius: 12px; height: 220px;
             overflow-y: auto; border: 1px solid #e2e8f0;
@@ -129,7 +123,7 @@
     <div class="monitor-panel">
         <div id="no-signal" class="no-signal">
             <h2>대기 중</h2>
-            <p>아래에서 지역을 선택하고 채널을 클릭하세요.<br>(방송국 사정에 따라 간혹 끊길 수 있습니다)</p>
+            <p>아래에서 지역을 선택하고 채널을 클릭하세요.<br>(방송국 보안 정책에 따라 간혹 차단될 수 있습니다)</p>
         </div>
         <video id="tv-player" controls autoplay playsinline></video>
     </div>
@@ -141,32 +135,40 @@
     <div class="controls">
         <select id="region-select">
             <option value="">-- 지역 선택 (Region) --</option>
-            <option value="Asia">🌏 아시아 (Asia) & 오세아니아</option>
+            <!-- 💡 대한민국 탭 전격 추가! -->
+            <option value="Korea">🇰🇷 대한민국 (South Korea)</option>
+            <option value="Asia">🌏 아시아 (Asia) & 중동</option>
             <option value="Europe">🇪🇺 유럽 (Europe)</option>
-            <option value="Russia">🇷🇺 러시아 (Russia) & CIS</option>
+            <option value="Russia">🇷🇺 러시아 (Russia)</option>
             <option value="NorthAmerica">🇺🇸 북미 (North America)</option>
             <option value="SouthAmerica">🌎 남미 (South America)</option>
-            <option value="Africa">🌍 중동 & 아프리카 (ME & Africa)</option>
+            <option value="Africa">🌍 아프리카 (Africa)</option>
         </select>
         <button id="scan-btn" class="scan-btn">불러오기</button>
     </div>
 
     <div class="list-window">
         <ul id="station-list">
-            <li class="no-data">지역을 선택하고 버튼을 누르면<br>가장 안정적인 글로벌 채널이 나타납니다.</li>
+            <li class="no-data">지역을 선택하고 버튼을 누르면<br>가장 안정적인 채널이 나타납니다.</li>
         </ul>
     </div>
 </div>
 
 <script>
-    // 💡 가장 생존율이 높은 글로벌 공영/뉴스 스트림 위주로 엄선한 데이터베이스
     const tvDatabase = {
+        // 🇰🇷 대한민국 (공식 개방형 뉴스/글로벌 스트림 엄선)
+        "Korea": [
+            { name: "YTN Live (24시간 뉴스)", category: "News", url: "https://live-amnews.ytn.co.kr/ytn/hd_live.m3u8" },
+            { name: "연합뉴스TV (Yonhap News)", category: "News", url: "https://yonhapnewstv-live.cdn.ntruss.com/live/live/playlist.m3u8" },
+            { name: "KBS World (글로벌 방송)", category: "General/K-Pop", url: "https://kbs-world.gcdn.ntruss.com/live/kbs_world/index.m3u8" },
+            { name: "Arirang TV (아리랑TV 영어방송)", category: "Culture", url: "https://amdlive-ch01-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/playlist.m3u8" },
+            { name: "KTV 국민방송", category: "Public", url: "https://live.ktv.go.kr/ktv/hd_live.m3u8" }
+        ],
         "Asia": [
-            { name: "Arirang TV (Korea)", category: "News/Culture", url: "https://amdlive.ctnd.com.edgesuite.net/arirang_1ch/smil:arirang_1ch.smil/playlist.m3u8" },
+            { name: "Al Jazeera (Server 1 - Main)", category: "News", url: "https://live-hls-web-aje.getaj.net/AJE/index.m3u8" },
+            { name: "Al Jazeera (Server 2 - CloudFront)", category: "News", url: "https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/al-jazeera-english/playlist.m3u8" },
             { name: "CGTN (China)", category: "News", url: "https://live.cgtn.com/1000/prog_index.m3u8" },
-            { name: "CNA (Singapore)", category: "News", url: "https://d2e1asnsl7br7b.cloudfront.net/7782e205e72f43aeb4a48ec97f66ebbe/index.m3u8" },
-            { name: "Al Jazeera (Qatar)", category: "News", url: "https://live-hls-web-aje.getaj.net/AJE/index.m3u8" },
-            { name: "Sky News Australia", category: "News", url: "https://skynewsau-live.akamaized.net/hls/live/2002689/skynewsau-extra1/master.m3u8" }
+            { name: "CNA (Singapore)", category: "News", url: "https://d2e1asnsl7br7b.cloudfront.net/7782e205e72f43aeb4a48ec97f66ebbe/index.m3u8" }
         ],
         "Europe": [
             { name: "DW English (Germany)", category: "News", url: "https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8" },
@@ -180,10 +182,10 @@
             { name: "Channel One Russia (1TV)", category: "General", url: "https://edge25-htc.1tv.ru/live-v2/1000/1tv/master.m3u8" }
         ],
         "NorthAmerica": [
-            { name: "Bloomberg TV", category: "Business", url: "https://live.bloomberg.tv/cbn/x/8.m3u8" },
+            { name: "Bloomberg TV (US Server)", category: "Business", url: "https://liveproduseast.akamaized.net/us/Channel-USTV-AWS-virginia-1/Source-USTV-1000-1_live.m3u8" },
+            { name: "Bloomberg TV (Asia Server)", category: "Business", url: "https://liveprodapnortheast.akamaized.net/asia1/Channel-AsiaTVqvs-AWS-tokyo-1/Source-AsiaTVqvs-1000-1_live.m3u8" },
             { name: "CBS News Live", category: "News", url: "https://cbsn-us.cbsnstream.cbsnews.com/out/v1/55a8648e8f134e82a470f83d562deeca/master.m3u8" },
-            { name: "NASA TV Public", category: "Science", url: "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8" },
-            { name: "Red Bull TV", category: "Sports", url: "https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8" }
+            { name: "NASA TV Public", category: "Science", url: "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8" }
         ],
         "SouthAmerica": [
             { name: "TeleSUR (Latin America)", category: "News", url: "https://cdnamd-hls-globecast.akamaized.net/live/ramdisk/telesur/hls_sn_m/index.m3u8" },
@@ -206,14 +208,9 @@
     
     let hls = null; 
 
-    // 💡 지역 선택 시 채널 목록 스캔
     scanBtn.addEventListener('click', () => {
         const region = document.getElementById('region-select').value;
-        
-        if(!region) {
-            alert("지역을 먼저 선택해 주십시오.");
-            return;
-        }
+        if(!region) { alert("지역을 먼저 선택해 주십시오."); return; }
 
         const channels = tvDatabase[region];
         ledStation.innerText = `총 ${channels.length}개의 채널이 검색되었습니다.`;
@@ -231,7 +228,6 @@
         });
     });
 
-    // 💡 TV 채널 재생 로직 (hls.js 활용)
     function playChannel(url, name) {
         ledStation.innerText = `▶ 시청 중: ${name}`;
         noSignalScreen.style.display = 'none'; 
@@ -249,7 +245,7 @@
                 videoElement.play();
             });
             hls.on(Hls.Events.ERROR, function(event, data) {
-                if (data.fatal) handleError();
+                if (data.fatal) handleError(name);
             });
         }
         else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
@@ -257,15 +253,14 @@
             videoElement.addEventListener('loadedmetadata', function() {
                 videoElement.play();
             });
-            videoElement.addEventListener('error', handleError);
+            videoElement.addEventListener('error', () => handleError(name));
         }
     }
 
-    // 재생 오류 발생 시 처리
-    function handleError() {
+    function handleError(name) {
         noSignalScreen.style.display = 'flex';
-        noSignalScreen.innerHTML = '<h2>송출 오류 📡</h2><p>해당 방송국의 서버가 응답하지 않거나 주소가 변경되었습니다.<br>다른 채널을 선택해 주세요.</p>';
-        ledStation.innerText = "연결 실패 (Connection Lost)";
+        noSignalScreen.innerHTML = `<h2>송출 오류 📡</h2><p>해당 서버가 브라우저 보안 정책으로 인해 차단되었습니다.<br>다른 채널을 선택해 보세요.</p>`;
+        ledStation.innerText = "연결 실패 (Blocked)";
         onAirIndicator.classList.remove('active');
     }
 </script>
