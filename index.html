@@ -52,11 +52,13 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
 
-        video {
+        /* 비디오와 유튜브 아이프레임을 동시에 배치하고 필요에 따라 숨김 처리 */
+        video, iframe {
             width: 100%; height: 100%;
-            background: #000;
-            object-fit: contain;
+            background: #000; border: none;
+            position: absolute; top: 0; left: 0;
         }
+        iframe { display: none; } /* 기본적으로는 숨김 */
 
         .no-signal {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -123,9 +125,10 @@
     <div class="monitor-panel">
         <div id="no-signal" class="no-signal">
             <h2>대기 중</h2>
-            <p>아래에서 지역을 선택하고 채널을 클릭하세요.<br>(방송국 보안 정책에 따라 간혹 차단될 수 있습니다)</p>
+            <p>아래에서 지역을 선택하고 채널을 클릭하세요.<br>(한국 채널은 유튜브 라이브로 안정적으로 송출됩니다)</p>
         </div>
-        <video id="tv-player" controls autoplay playsinline></video>
+        <video id="tv-player" controls playsinline></video>
+        <iframe id="yt-player" allow="autoplay; encrypted-media" allowfullscreen></iframe>
     </div>
 
     <div class="status-bar">
@@ -135,8 +138,7 @@
     <div class="controls">
         <select id="region-select">
             <option value="">-- 지역 선택 (Region) --</option>
-            <!-- 💡 대한민국 탭 전격 추가! -->
-            <option value="Korea">🇰🇷 대한민국 (South Korea)</option>
+            <option value="Korea">🇰🇷 대한민국 (YouTube Live)</option>
             <option value="Asia">🌏 아시아 (Asia) & 중동</option>
             <option value="Europe">🇪🇺 유럽 (Europe)</option>
             <option value="Russia">🇷🇺 러시아 (Russia)</option>
@@ -149,24 +151,26 @@
 
     <div class="list-window">
         <ul id="station-list">
-            <li class="no-data">지역을 선택하고 버튼을 누르면<br>가장 안정적인 채널이 나타납니다.</li>
+            <li class="no-data">지역을 선택하고 버튼을 누르면<br>채널이 나타납니다.</li>
         </ul>
     </div>
 </div>
 
 <script>
+    // 💡 한국 채널을 '방송국 공식 24시간 유튜브 라이브 주소'로 교체 완료!
     const tvDatabase = {
-        // 🇰🇷 대한민국 (공식 개방형 뉴스/글로벌 스트림 엄선)
         "Korea": [
-            { name: "YTN Live (24시간 뉴스)", category: "News", url: "https://live-amnews.ytn.co.kr/ytn/hd_live.m3u8" },
-            { name: "연합뉴스TV (Yonhap News)", category: "News", url: "https://yonhapnewstv-live.cdn.ntruss.com/live/live/playlist.m3u8" },
-            { name: "KBS World (글로벌 방송)", category: "General/K-Pop", url: "https://kbs-world.gcdn.ntruss.com/live/kbs_world/index.m3u8" },
-            { name: "Arirang TV (아리랑TV 영어방송)", category: "Culture", url: "https://amdlive-ch01-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/playlist.m3u8" },
-            { name: "KTV 국민방송", category: "Public", url: "https://live.ktv.go.kr/ktv/hd_live.m3u8" }
+            { name: "MBC News (24시 라이브)", category: "News", url: "https://www.youtube.com/embed/live_stream?channel=UCF4Wxdo3inikv0pVqOXF_AA" },
+            { name: "KBS News (24시 라이브)", category: "News", url: "https://www.youtube.com/embed/live_stream?channel=UCcQTRi69eSR39ptqenqM3cg" },
+            { name: "SBS News (24시 라이브)", category: "News", url: "https://www.youtube.com/embed/live_stream?channel=UCkinYIG_I_O2HkR9I-B1v6g" },
+            { name: "JTBC News (24시 라이브)", category: "News", url: "https://www.youtube.com/embed/live_stream?channel=UCsUGl0Z088qV51yQJvLLTmA" },
+            { name: "YTN (24시간 뉴스)", category: "News", url: "https://www.youtube.com/embed/live_stream?channel=UChlgI3UHCOnwUGzWzbJ3H5w" },
+            { name: "연합뉴스TV", category: "News", url: "https://www.youtube.com/embed/live_stream?channel=UCTQVlxOOFAWNUbA-DbXQocg" },
+            // 아리랑TV는 기존 m3u8이 안정적이므로 그대로 유지
+            { name: "Arirang TV (Global)", category: "Culture", url: "https://amdlive-ch01-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/playlist.m3u8" }
         ],
         "Asia": [
             { name: "Al Jazeera (Server 1 - Main)", category: "News", url: "https://live-hls-web-aje.getaj.net/AJE/index.m3u8" },
-            { name: "Al Jazeera (Server 2 - CloudFront)", category: "News", url: "https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/al-jazeera-english/playlist.m3u8" },
             { name: "CGTN (China)", category: "News", url: "https://live.cgtn.com/1000/prog_index.m3u8" },
             { name: "CNA (Singapore)", category: "News", url: "https://d2e1asnsl7br7b.cloudfront.net/7782e205e72f43aeb4a48ec97f66ebbe/index.m3u8" }
         ],
@@ -182,8 +186,7 @@
             { name: "Channel One Russia (1TV)", category: "General", url: "https://edge25-htc.1tv.ru/live-v2/1000/1tv/master.m3u8" }
         ],
         "NorthAmerica": [
-            { name: "Bloomberg TV (US Server)", category: "Business", url: "https://liveproduseast.akamaized.net/us/Channel-USTV-AWS-virginia-1/Source-USTV-1000-1_live.m3u8" },
-            { name: "Bloomberg TV (Asia Server)", category: "Business", url: "https://liveprodapnortheast.akamaized.net/asia1/Channel-AsiaTVqvs-AWS-tokyo-1/Source-AsiaTVqvs-1000-1_live.m3u8" },
+            { name: "Bloomberg TV", category: "Business", url: "https://liveprodeuwest.akamaized.net/eu1/Channel-EUTVqvs-AWS-ireland-1/Source-EUTVqvs-1000-1_live.m3u8" },
             { name: "CBS News Live", category: "News", url: "https://cbsn-us.cbsnstream.cbsnews.com/out/v1/55a8648e8f134e82a470f83d562deeca/master.m3u8" },
             { name: "NASA TV Public", category: "Science", url: "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8" }
         ],
@@ -200,6 +203,7 @@
     };
 
     const videoElement = document.getElementById('tv-player');
+    const ytElement = document.getElementById('yt-player');
     const noSignalScreen = document.getElementById('no-signal');
     const ledStation = document.getElementById('led-station');
     const stationList = document.getElementById('station-list');
@@ -236,6 +240,21 @@
         if (hls) {
             hls.destroy();
         }
+        videoElement.pause();
+
+        // 💡 유튜브 링크인 경우 Iframe 플레이어를 띄움
+        if (url.includes("youtube.com")) {
+            videoElement.style.display = 'none';
+            ytElement.style.display = 'block';
+            // 자동 재생 파라미터 추가
+            ytElement.src = url + "&autoplay=1&mute=0"; 
+            return;
+        }
+
+        // 일반 HLS 스트리밍인 경우 Video 플레이어를 띄움
+        ytElement.style.display = 'none';
+        ytElement.src = ''; 
+        videoElement.style.display = 'block';
 
         if (Hls.isSupported()) {
             hls = new Hls();
@@ -245,7 +264,7 @@
                 videoElement.play();
             });
             hls.on(Hls.Events.ERROR, function(event, data) {
-                if (data.fatal) handleError(name);
+                if (data.fatal) handleError();
             });
         }
         else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
@@ -253,15 +272,17 @@
             videoElement.addEventListener('loadedmetadata', function() {
                 videoElement.play();
             });
-            videoElement.addEventListener('error', () => handleError(name));
+            videoElement.addEventListener('error', handleError);
         }
     }
 
-    function handleError(name) {
+    function handleError() {
         noSignalScreen.style.display = 'flex';
-        noSignalScreen.innerHTML = `<h2>송출 오류 📡</h2><p>해당 서버가 브라우저 보안 정책으로 인해 차단되었습니다.<br>다른 채널을 선택해 보세요.</p>`;
+        noSignalScreen.innerHTML = `<h2>송출 오류 📡</h2><p>해당 채널의 주소가 변경되었거나 차단되었습니다.<br>다른 채널을 선택해 보세요.</p>`;
         ledStation.innerText = "연결 실패 (Blocked)";
         onAirIndicator.classList.remove('active');
+        videoElement.style.display = 'none';
+        ytElement.style.display = 'none';
     }
 </script>
 
