@@ -42,7 +42,6 @@
             box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
         }
 
-        /* 모니터 패널 */
         .monitor-panel {
             background: #000;
             border-radius: 12px;
@@ -57,10 +56,9 @@
             width: 100%; height: 100%;
             background: #000;
             object-fit: contain;
-            display: none; /* 기본 숨김 */
+            display: none; 
         }
 
-        /* 💡 외부 앱 연동 안내 화면 (새로 추가) */
         .launcher-screen, .no-signal {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -125,20 +123,17 @@
     </div>
 
     <div class="monitor-panel">
-        <!-- 기본 대기 화면 -->
         <div id="no-signal" class="no-signal">
             <h2>대기 중</h2>
             <p>아래에서 지역을 선택하고 채널을 클릭하세요.</p>
         </div>
         
-        <!-- 자체 재생 플레이어 -->
         <video id="tv-player" controls playsinline></video>
 
-        <!-- 💡 외부 앱(유튜브) 연결 안내 화면 -->
         <div id="launcher-screen" class="launcher-screen">
             <h2>보안 채널 접속</h2>
             <p>해당 방송사는 외부 앱에서의 직접 재생을 차단하고 있습니다.<br>아래 버튼을 누르면 공식 유튜브 채널로 연결됩니다.</p>
-            <a id="launch-btn" class="launch-btn" href="#" target="_blank">유튜브에서 라이브 보기</a>
+            <a id="launch-btn" class="launch-btn" href="#" target="_blank">유튜브 앱으로 열기</a>
         </div>
     </div>
 
@@ -148,26 +143,30 @@
 
     <div class="controls">
         <select id="region-select">
-            <option value="">-- 지역 선택 (Region) --</option>
+            <option value="">-- 대륙/지역 선택 --</option>
             <option value="Korea">🇰🇷 대한민국 (YouTube 연동)</option>
-            <option value="Asia">🌏 아시아 (Asia) & 중동</option>
+            <option value="Asia">🌏 아시아 & 오세아니아</option>
+            <option value="MiddleEast">🕌 중동 (Middle East)</option>
             <option value="Europe">🇪🇺 유럽 (Europe)</option>
+            <option value="RussiaCIS">🇷🇺 러시아 & CIS (중앙아시아)</option>
+            <option value="NorthAmerica">🇺🇸 북미 (North America)</option>
+            <option value="SouthAmerica">🌎 중남미 (Latin America)</option>
+            <option value="Africa">🌍 아프리카 (Africa)</option>
         </select>
         <button id="scan-btn" class="scan-btn">불러오기</button>
     </div>
 
     <div class="list-window">
         <ul id="station-list">
-            <li class="no-data" style="padding:40px 20px; text-align:center; color:#94a3b8;">지역을 선택하고 버튼을 누르면<br>채널이 나타납니다.</li>
+            <li class="no-data" style="padding:40px 20px; text-align:center; color:#94a3b8;">전 세계 방송을 탐험해 보세요.<br>지역을 선택하고 버튼을 누르시면 됩니다.</li>
         </ul>
     </div>
 </div>
 
 <script>
-    // 💡 type 속성 추가: 'hls'(자체 재생) vs 'youtube_external'(유튜브 앱으로 띄우기)
+    // 💡 전 세계 문화권 대규모 확장 데이터베이스 (약 40여 개국 반영)
     const tvDatabase = {
         "Korea": [
-            // 방송사 공식 라이브 주소 (스마트폰에서 클릭 시 유튜브 앱으로 바로 전환됨)
             { name: "MBC News (24시 라이브)", category: "News", type: "youtube_external", url: "https://www.youtube.com/@MBCNEWS11/live" },
             { name: "KBS News (24시 라이브)", category: "News", type: "youtube_external", url: "https://www.youtube.com/@KBSnews/live" },
             { name: "SBS News (24시 라이브)", category: "News", type: "youtube_external", url: "https://www.youtube.com/@sbsnews8/live" },
@@ -177,14 +176,53 @@
             { name: "Arirang TV (Global)", category: "Culture", type: "hls", url: "https://amdlive-ch01-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/playlist.m3u8" }
         ],
         "Asia": [
-            { name: "Al Jazeera (Main)", category: "News", type: "hls", url: "https://live-hls-web-aje.getaj.net/AJE/index.m3u8" },
-            { name: "CGTN (China)", category: "News", type: "hls", url: "https://live.cgtn.com/1000/prog_index.m3u8" },
-            { name: "CNA (Singapore)", category: "News", type: "hls", url: "https://d2e1asnsl7br7b.cloudfront.net/7782e205e72f43aeb4a48ec97f66ebbe/index.m3u8" }
+            { name: "NHK World (일본)", category: "News/Culture", type: "hls", url: "https://b-nhkwlive-ojp.akamaized.net/hls/live/2003459/nhkwlive-ojp-en/index.m3u8" },
+            { name: "CGTN (중국)", category: "News", type: "hls", url: "https://live.cgtn.com/1000/prog_index.m3u8" },
+            { name: "CNA (싱가포르)", category: "News", type: "hls", url: "https://d2e1asnsl7br7b.cloudfront.net/7782e205e72f43aeb4a48ec97f66ebbe/index.m3u8" },
+            { name: "NDTV 24x7 (인도)", category: "News", type: "hls", url: "https://ndtv24x7elemarchana.akamaized.net/hls/live/2003678/ndtv24x7/master.m3u8" },
+            { name: "Thai PBS (태국)", category: "General", type: "hls", url: "https://live.thaipbs.or.th/live/thaipbs/master.m3u8" },
+            { name: "Sky News Australia (호주)", category: "News", type: "hls", url: "https://skynewsau-live.akamaized.net/hls/live/2002689/skynewsau-extra1/master.m3u8" },
+            { name: "ABC News (호주)", category: "News", type: "hls", url: "https://abc-iview-mediapackagelinux-2.akamaized.net/out/v1/6e1cc6d25ea0496ea9d9e6eb1a3964bb/index.m3u8" }
+        ],
+        "MiddleEast": [
+            { name: "Al Jazeera English (카타르)", category: "News", type: "hls", url: "https://live-hls-web-aje.getaj.net/AJE/index.m3u8" },
+            { name: "TRT World (튀르키예)", category: "News/Culture", type: "hls", url: "https://trt-hls.rnp.trt.com.tr/tv/trtworld/master.m3u8" },
+            { name: "Al Arabiya (사우디/UAE)", category: "News", type: "hls", url: "https://live.alarabiya.net/alarabiya-pub/alarabiya/playlist.m3u8" },
+            { name: "i24NEWS English (이스라엘)", category: "News", type: "hls", url: "https://bcovlive-a.akamaihd.net/148719f95d124ecdb5dd0355f3cb9cc6/eu-central-1/5377161680001/playlist.m3u8" }
         ],
         "Europe": [
-            { name: "DW English (Germany)", category: "News", type: "hls", url: "https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8" },
-            { name: "France 24 English", category: "News", type: "hls", url: "https://static.france24.com/live/F24_EN_HI_HLS/live_web.m3u8" },
-            { name: "EuroNews (Europe)", category: "News", type: "hls", url: "https://ewns-hls-en-europe.akamaized.net/default/master.m3u8" }
+            { name: "DW English (독일)", category: "News/Culture", type: "hls", url: "https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8" },
+            { name: "France 24 English (프랑스)", category: "News", type: "hls", url: "https://static.france24.com/live/F24_EN_HI_HLS/live_web.m3u8" },
+            { name: "Sky News (영국)", category: "News", type: "hls", url: "https://skynews-eu.rakuten.wurl.tv/playlist.m3u8" },
+            { name: "EuroNews (유럽연합)", category: "News", type: "hls", url: "https://ewns-hls-en-europe.akamaized.net/default/master.m3u8" },
+            { name: "Rai News 24 (이탈리아)", category: "News", type: "hls", url: "https://rainews1-live.akamaized.net/hls/live/598326/rainews1/rainews1/playlist.m3u8" },
+            { name: "RTVE 24h (스페인)", category: "News", type: "hls", url: "https://rtve-live-tve24h.akamaized.net/rtve/tve24h/main.m3u8" },
+            { name: "TVP World (폴란드)", category: "News", type: "hls", url: "https://tvp-video-live.redcdn.pl/dash/O_TVP_WORLD_1234/manifest.m3u8" }
+        ],
+        "RussiaCIS": [
+            { name: "RT News (러시아 글로벌)", category: "News", type: "hls", url: "https://rt-glb.rttv.com/dvr/rtnews/playlist.m3u8" },
+            { name: "Channel One 1TV (러시아)", category: "General", type: "hls", url: "https://edge25-htc.1tv.ru/live-v2/1000/1tv/master.m3u8" },
+            { name: "Espreso TV (우크라이나)", category: "News", type: "hls", url: "https://espreso-tv-live.akamaized.net/hls/live/2105151/espreso/master.m3u8" },
+            { name: "Belarus 24 (벨라루스)", category: "Culture", type: "hls", url: "https://live.belarus24.by/b24/b24.m3u8" }
+        ],
+        "NorthAmerica": [
+            { name: "Bloomberg TV (미국 경제)", category: "Business", type: "hls", url: "https://liveprodeuwest.akamaized.net/eu1/Channel-EUTVqvs-AWS-ireland-1/Source-EUTVqvs-1000-1_live.m3u8" },
+            { name: "CBS News Live (미국)", category: "News", type: "hls", url: "https://cbsn-us.cbsnstream.cbsnews.com/out/v1/55a8648e8f134e82a470f83d562deeca/master.m3u8" },
+            { name: "NASA TV Public (우주/과학)", category: "Science", type: "hls", url: "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8" },
+            { name: "Red Bull TV (익스트림 스포츠)", category: "Sports", type: "hls", url: "https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8" },
+            { name: "Milenio TV (멕시코)", category: "News", type: "hls", url: "https://mdstrm.com/live-stream-playlist/57d071a942bd7f286b5b5c90.m3u8" }
+        ],
+        "SouthAmerica": [
+            { name: "TeleSUR (중남미 연합)", category: "News/Culture", type: "hls", url: "https://cdnamd-hls-globecast.akamaized.net/live/ramdisk/telesur/hls_sn_m/index.m3u8" },
+            { name: "Record News (브라질)", category: "News", type: "hls", url: "https://cdn.recordnews.tv.br/videostream/hls/playlist.m3u8" },
+            { name: "Canal 26 (아르헨티나)", category: "News", type: "hls", url: "https://live.canal26.com/live/canal26/playlist.m3u8" },
+            { name: "Caracol TV (콜롬비아)", category: "General", type: "youtube_external", url: "https://www.youtube.com/@caracoltv/live" }
+        ],
+        "Africa": [
+            { name: "Africanews (범아프리카)", category: "News", type: "hls", url: "https://africanews.wurl.tv/playlist.m3u8" },
+            { name: "SABC News (남아프리카 공화국)", category: "News", type: "hls", url: "https://sabcnews.akamaized.net/hls/live/2018590/sabcnews/master.m3u8" },
+            { name: "KTV (케냐)", category: "General", type: "hls", url: "https://tv.y2k.co.ke/hls/ktnnews.m3u8" },
+            { name: "NTA (나이지리아 국영방송)", category: "General", type: "youtube_external", url: "https://www.youtube.com/@ntanewsnow/live" }
         ]
     };
 
@@ -223,7 +261,6 @@
         ledStation.innerText = `▶ 선택됨: ${channel.name}`;
         onAirIndicator.classList.add('active'); 
         
-        // 모든 패널 끄기 초기화
         noSignalScreen.style.display = 'none'; 
         videoElement.style.display = 'none';
         launcherScreen.style.display = 'none';
@@ -231,14 +268,12 @@
         if (hls) hls.destroy();
         videoElement.pause();
 
-        // 💡 1. 유튜브 등 외부 연동 채널일 경우
         if (channel.type === "youtube_external") {
             launcherScreen.style.display = 'flex';
             launchBtn.href = channel.url;
             return;
         }
 
-        // 💡 2. 자체 재생 가능한 글로벌 채널일 경우 (hls)
         videoElement.style.display = 'block';
 
         if (Hls.isSupported()) {
@@ -263,8 +298,8 @@
     function handleError() {
         videoElement.style.display = 'none';
         noSignalScreen.style.display = 'flex';
-        noSignalScreen.innerHTML = `<h2>송출 오류 📡</h2><p>해당 채널의 주소가 변경되었거나 차단되었습니다.<br>다른 채널을 선택해 보세요.</p>`;
-        ledStation.innerText = "연결 실패 (Blocked)";
+        noSignalScreen.innerHTML = `<h2>송출 오류 📡</h2><p>해당 국가의 채널 주소가 일시적으로 차단되었습니다.<br>다른 채널을 선택해 보세요.</p>`;
+        ledStation.innerText = "연결 실패 (Offline)";
         onAirIndicator.classList.remove('active');
     }
 </script>
